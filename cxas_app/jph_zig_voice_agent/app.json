@@ -28,10 +28,6 @@
             "en-GB": {
                 "voice": "en-GB-Chirp3-HD-Zephyr",
                 "speakingRate": 0.95
-            },
-            "nl-NL": {
-                "voice": "en-GB-Chirp3-HD-Zephyr",
-                "speakingRate": 0.95
             }
         }
     },
