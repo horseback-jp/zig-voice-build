@@ -1,0 +1,86 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "chunks": [
+        {
+          "defaultVariables": {
+            "customer_profile": "",
+            "_silence_count": "0",
+            "current_date": "2026-06-01[Europe/Amsterdam]",
+            "_escalation_trigger": "",
+            "active_language": "English"
+          }
+        }
+      ],
+      "eventTime": "2026-06-01T16:47:03.673Z"
+    },
+    {
+      "role": "user",
+      "chunks": [
+        {
+          "transcript": "Hello"
+        }
+      ],
+      "eventTime": "2026-06-01T16:47:03.673Z"
+    },
+    {
+      "role": "root_agent",
+      "chunks": [
+        {
+          "transcript": "Hmm, I'm having trouble with that. Do you want me to try again?"
+        }
+      ],
+      "eventTime": "2026-06-01T16:47:03.691Z"
+    }
+  ],
+  "rootSpan": {
+    "name": "root",
+    "startTime": "2026-06-01T16:47:00.432240Z",
+    "endTime": "2026-06-01T16:47:03.694237Z",
+    "attributes": {
+      "perceived latency (ms)": 242,
+      "[debug] speech end processing delay (ms)": 219,
+      "[debug] agent start latency (ms)": 3,
+      "input types": [
+        "audio"
+      ],
+      "connection index": 1
+    },
+    "childSpans": [
+      {
+        "name": "VAD",
+        "startTime": "2026-06-01T16:47:02.336523Z",
+        "endTime": "2026-06-01T16:47:03.451642Z",
+        "attributes": {
+          "start of speech offset (ms)": 640,
+          "end of speech offset (ms)": 1960
+        },
+        "duration": "1.115119s"
+      },
+      {
+        "name": "Callback",
+        "startTime": "2026-06-01T16:47:03.691227Z",
+        "endTime": "2026-06-01T16:47:03.691229Z",
+        "attributes": {
+          "stage": "BeforeAgent",
+          "fallback reason": "BeforeAgent callback execution failed: string_value: \t \"1 validation error for _CallbackResult\\ncontent\\n  Input should be a valid dictionary or instance of Content [type=model_type, input_value=LlmResponse(content=Conte...one, turn_complete=None), input_type=LlmResponse]\\n    For further information visit https://errors.pydantic.dev/2.11/v/model_type\\nTraceback (most recent call last):\\n  File \\\"<string>\\\", line 39, in execute_before_agent_callback\\n  File \\\"/usr/local/lib/python3.12/site-packages/pydantic/main.py\\\", line 253, in __init__\\n    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)\\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\npydantic_core._pydantic_core.ValidationError: 1 validation error for _CallbackResult\\ncontent\\n  Input should be a valid dictionary or instance of Content [type=model_type, input_value=LlmResponse(content=Conte...one, turn_complete=None), input_type=LlmResponse]\\n    For further information visit https://errors.pydantic.dev/2.11/v/model_type\\n\"\n"
+        },
+        "duration": "0.000002s"
+      },
+      {
+        "name": "TTS",
+        "startTime": "2026-06-01T16:47:03.691699Z",
+        "endTime": "2026-06-01T16:47:03.693570Z",
+        "attributes": {
+          "voice": "en-GB-Chirp3-HD-Zephyr",
+          "cache hit": true,
+          "time to first audio (ms)": 2,
+          "audio duration (ms)": 3888
+        },
+        "duration": "0.001871s"
+      }
+    ],
+    "duration": "3.261997s"
+  }
+}
