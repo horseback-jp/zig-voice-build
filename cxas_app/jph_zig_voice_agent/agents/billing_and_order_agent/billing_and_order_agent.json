@@ -10,5 +10,5 @@
         "update_language",
         "end_session"
     ],
-    "beforeModelCallbacks": [{"pythonCode": "agents/billing_and_order_agent/before_model_callback/python_code.py"}]
+    "beforeModelCallbacks": [{"pythonCode": "agents/billing_and_order_agent/before_model_callbacks/before_model/python_code.py"}]
 }

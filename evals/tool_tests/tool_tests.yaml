@@ -1,0 +1,415 @@
+tests:
+
+  # ---------------------------------------------------------------------------
+  # set_escalation_trigger
+  # Returns: {trigger_set: bool, agent_action: str}
+  # ---------------------------------------------------------------------------
+
+  - name: set_escalation_trigger_customer_requested
+    tool: set_escalation_trigger
+    args:
+      reason: "customer_requested"
+    expectations:
+      response:
+        - path: "$.result.trigger_set"
+          operator: equals
+          value: true
+        - path: "$.result.agent_action"
+          operator: is_not_null
+
+  - name: set_escalation_trigger_unresolvable
+    tool: set_escalation_trigger
+    args:
+      reason: "unresolvable"
+    expectations:
+      response:
+        - path: "$.result.trigger_set"
+          operator: equals
+          value: true
+        - path: "$.result.agent_action"
+          operator: contains
+          value: "escalation trigger has been set"
+
+  - name: set_escalation_trigger_out_of_scope
+    tool: set_escalation_trigger
+    args:
+      reason: "out_of_scope"
+    expectations:
+      response:
+        - path: "$.result.trigger_set"
+          operator: equals
+          value: true
+        - path: "$.result.agent_action"
+          operator: contains
+          value: "transfer will be handled automatically"
+
+  # ---------------------------------------------------------------------------
+  # recognize_customer
+  # Known returns: {customer_id, first_name, last_name, account_status}
+  # Unknown returns: {customer_id: null, agent_action: str}
+  # ---------------------------------------------------------------------------
+
+  - name: recognize_customer_jan_de_jong
+    tool: recognize_customer
+    args:
+      phone_number: "+31201234567"
+    expectations:
+      response:
+        - path: "$.result.customer_id"
+          operator: equals
+          value: "CZ-98765"
+        - path: "$.result.first_name"
+          operator: equals
+          value: "Jan"
+        - path: "$.result.last_name"
+          operator: equals
+          value: "de Jong"
+        - path: "$.result.account_status"
+          operator: equals
+          value: "Active"
+
+  - name: recognize_customer_sarah_jenkins
+    tool: recognize_customer
+    args:
+      phone_number: "+441234567890"
+    expectations:
+      response:
+        - path: "$.result.customer_id"
+          operator: equals
+          value: "CZ-44321"
+        - path: "$.result.first_name"
+          operator: equals
+          value: "Sarah"
+        - path: "$.result.account_status"
+          operator: equals
+          value: "Active"
+
+  - name: recognize_customer_mark_evans
+    tool: recognize_customer
+    args:
+      phone_number: "+441987654321"
+    expectations:
+      response:
+        - path: "$.result.customer_id"
+          operator: equals
+          value: "CZ-12345"
+        - path: "$.result.first_name"
+          operator: equals
+          value: "Mark"
+        - path: "$.result.account_status"
+          operator: equals
+          value: "Active"
+
+  - name: recognize_customer_unknown_number
+    tool: recognize_customer
+    args:
+      phone_number: "+99999999999"
+    expectations:
+      response:
+        - path: "$.result.customer_id"
+          operator: is_null
+        - path: "$.result.agent_action"
+          operator: contains
+          value: "not recognised"
+
+  # ---------------------------------------------------------------------------
+  # update_language
+  # Returns: {success: bool, active_language: str, agent_action: str}
+  # ---------------------------------------------------------------------------
+
+  - name: update_language_switch_to_dutch
+    tool: update_language
+    args:
+      new_language: "Dutch"
+    expectations:
+      response:
+        - path: "$.result.success"
+          operator: equals
+          value: true
+        - path: "$.result.active_language"
+          operator: equals
+          value: "Dutch"
+        - path: "$.result.agent_action"
+          operator: contains
+          value: "Dutch"
+
+  - name: update_language_switch_to_english
+    tool: update_language
+    args:
+      new_language: "English"
+    expectations:
+      response:
+        - path: "$.result.success"
+          operator: equals
+          value: true
+        - path: "$.result.active_language"
+          operator: equals
+          value: "English"
+        - path: "$.result.agent_action"
+          operator: contains
+          value: "English"
+
+  - name: update_language_unsupported_language
+    tool: update_language
+    args:
+      new_language: "French"
+    expectations:
+      response:
+        - path: "$.result.success"
+          operator: equals
+          value: false
+        - path: "$.result.agent_action"
+          operator: contains
+          value: "not supported"
+
+  # ---------------------------------------------------------------------------
+  # retrieve_invoice_data
+  # Known returns: {current_bill: float, previous_bill: float, itemized_charges: list}
+  # Unknown returns: {error: str, agent_action: str}
+  # ---------------------------------------------------------------------------
+
+  - name: retrieve_invoice_data_cz_98765
+    tool: retrieve_invoice_data
+    args:
+      customer_id: "CZ-98765"
+    expectations:
+      response:
+        - path: "$.result.current_bill"
+          operator: equals
+          value: 75.0
+        - path: "$.result.previous_bill"
+          operator: equals
+          value: 60.0
+        - path: "$.result.itemized_charges"
+          operator: is_not_null
+
+  - name: retrieve_invoice_data_demo_001
+    tool: retrieve_invoice_data
+    args:
+      customer_id: "DEMO-001"
+    expectations:
+      response:
+        - path: "$.result.current_bill"
+          operator: is_not_null
+        - path: "$.result.previous_bill"
+          operator: is_not_null
+        - path: "$.result.itemized_charges"
+          operator: is_not_null
+
+  - name: retrieve_invoice_data_unknown_customer
+    tool: retrieve_invoice_data
+    args:
+      customer_id: "CZ-00000"
+    expectations:
+      response:
+        - path: "$.result.error"
+          operator: equals
+          value: "billing_unavailable"
+        - path: "$.result.agent_action"
+          operator: contains
+          value: "billing specialist"
+
+  # ---------------------------------------------------------------------------
+  # get_order_status
+  # Known returns: {order_id, item_name, status, delivery_date}
+  # Unknown returns: {error: str, agent_action: str}
+  # ---------------------------------------------------------------------------
+
+  - name: get_order_status_cz_98765_in_transit
+    tool: get_order_status
+    args:
+      customer_id: "CZ-98765"
+    expectations:
+      response:
+        - path: "$.result.order_id"
+          operator: equals
+          value: "ORD-1122"
+        - path: "$.result.status"
+          operator: equals
+          value: "In Transit"
+        - path: "$.result.delivery_date"
+          operator: is_not_null
+
+  - name: get_order_status_cz_44321_delivered
+    tool: get_order_status
+    args:
+      customer_id: "CZ-44321"
+    expectations:
+      response:
+        - path: "$.result.order_id"
+          operator: equals
+          value: "ORD-0987"
+        - path: "$.result.status"
+          operator: equals
+          value: "Delivered"
+        - path: "$.result.item_name"
+          operator: is_not_null
+
+  - name: get_order_status_unknown_customer
+    tool: get_order_status
+    args:
+      customer_id: "CZ-00000"
+    expectations:
+      response:
+        - path: "$.result.error"
+          operator: equals
+          value: "no_active_order"
+        - path: "$.result.agent_action"
+          operator: contains
+          value: "no active order"
+
+  # ---------------------------------------------------------------------------
+  # get_modem_diagnostics
+  # Known returns: {modem_id, status, signal_strength, packet_loss, area_outage}
+  # Unknown returns: {error: str, agent_action: str}
+  # ---------------------------------------------------------------------------
+
+  - name: get_modem_diagnostics_cz_44321_weak_signal
+    tool: get_modem_diagnostics
+    args:
+      customer_id: "CZ-44321"
+    expectations:
+      response:
+        - path: "$.result.modem_id"
+          operator: equals
+          value: "MOD-8812"
+        - path: "$.result.signal_strength"
+          operator: equals
+          value: "Weak"
+        - path: "$.result.packet_loss"
+          operator: equals
+          value: "High"
+        - path: "$.result.area_outage"
+          operator: equals
+          value: false
+
+  - name: get_modem_diagnostics_cz_98765_good_signal
+    tool: get_modem_diagnostics
+    args:
+      customer_id: "CZ-98765"
+    expectations:
+      response:
+        - path: "$.result.modem_id"
+          operator: equals
+          value: "MOD-3301"
+        - path: "$.result.signal_strength"
+          operator: equals
+          value: "Good"
+        - path: "$.result.status"
+          operator: equals
+          value: "Online"
+
+  - name: get_modem_diagnostics_unknown_customer
+    tool: get_modem_diagnostics
+    args:
+      customer_id: "CZ-00000"
+    expectations:
+      response:
+        - path: "$.result.error"
+          operator: equals
+          value: "diagnostics_unavailable"
+        - path: "$.result.agent_action"
+          operator: contains
+          value: "mechanic visit"
+
+  # ---------------------------------------------------------------------------
+  # schedule_mechanic_visit
+  # Known returns: {appointment_id, date, time_slot, status}
+  # Unknown returns: {error: str, agent_action: str}
+  # ---------------------------------------------------------------------------
+
+  - name: schedule_mechanic_visit_cz_44321_morning
+    tool: schedule_mechanic_visit
+    args:
+      customer_id: "CZ-44321"
+      preferred_slot: "Next Tuesday morning"
+    expectations:
+      response:
+        - path: "$.result.appointment_id"
+          operator: equals
+          value: "APT-5544"
+        - path: "$.result.status"
+          operator: equals
+          value: "Confirmed"
+        - path: "$.result.time_slot"
+          operator: is_not_null
+        - path: "$.result.date"
+          operator: is_not_null
+
+  - name: schedule_mechanic_visit_cz_12345_afternoon
+    tool: schedule_mechanic_visit
+    args:
+      customer_id: "CZ-12345"
+      preferred_slot: "Thursday afternoon"
+    expectations:
+      response:
+        - path: "$.result.appointment_id"
+          operator: equals
+          value: "APT-7788"
+        - path: "$.result.status"
+          operator: equals
+          value: "Confirmed"
+        - path: "$.result.time_slot"
+          operator: equals
+          value: "13:00 - 17:00"
+
+  - name: schedule_mechanic_visit_unknown_customer
+    tool: schedule_mechanic_visit
+    args:
+      customer_id: "CZ-00000"
+      preferred_slot: "Any day this week"
+    expectations:
+      response:
+        - path: "$.result.error"
+          operator: equals
+          value: "no_slots_available"
+        - path: "$.result.agent_action"
+          operator: contains
+          value: "human advisor"
+
+  # ---------------------------------------------------------------------------
+  # escalate_to_human
+  # Known returns: {transfer_status: str, target_queue: str}
+  # Error (missing customer_id) returns: {error: str, agent_action: str}
+  # ---------------------------------------------------------------------------
+
+  - name: escalate_to_human_billing_context
+    tool: escalate_to_human
+    args:
+      customer_id: "CZ-98765"
+      context_summary: "Customer Jan de Jong called about a bill increase. Invoice CZ-98765 shows current bill of 75.00 EUR vs previous 60.00 EUR. Customer wants to speak to billing specialist."
+    expectations:
+      response:
+        - path: "$.result.transfer_status"
+          operator: equals
+          value: "Success"
+        - path: "$.result.target_queue"
+          operator: equals
+          value: "Level_2_Support"
+
+  - name: escalate_to_human_wifi_context
+    tool: escalate_to_human
+    args:
+      customer_id: "CZ-44321"
+      context_summary: "Customer Sarah Jenkins reporting persistent WiFi drop-outs. Diagnostics show weak signal and high packet loss (MOD-8812). Remote troubleshooting exhausted; on-site visit required."
+    expectations:
+      response:
+        - path: "$.result.transfer_status"
+          operator: equals
+          value: "Success"
+        - path: "$.result.target_queue"
+          operator: is_not_null
+
+  - name: escalate_to_human_missing_customer_id
+    tool: escalate_to_human
+    args:
+      customer_id: ""
+      context_summary: "Customer requested human agent."
+    expectations:
+      response:
+        - path: "$.result.error"
+          operator: equals
+          value: "missing_customer_id"
+        - path: "$.result.agent_action"
+          operator: contains
+          value: "account number"

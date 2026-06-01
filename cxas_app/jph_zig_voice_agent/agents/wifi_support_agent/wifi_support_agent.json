@@ -10,5 +10,5 @@
         "update_language",
         "end_session"
     ],
-    "beforeModelCallbacks": [{"pythonCode": "agents/wifi_support_agent/before_model_callback/python_code.py"}]
+    "beforeModelCallbacks": [{"pythonCode": "agents/wifi_support_agent/before_model_callbacks/before_model/python_code.py"}]
 }

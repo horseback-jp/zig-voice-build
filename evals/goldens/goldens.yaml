@@ -1,0 +1,426 @@
+# Golden Evals — Vodafone Ziggo Voice Agent
+# App: jph-zig-voice-agent | App ID: a76b5888-1d16-413c-9a3b-2f8d10c0b180
+# Generated: 2026-06-01
+#
+# Coverage: C-01, C-02, C-03, C-04, C-05, C-06, C-07, C-09, C-10, C-11,
+#           C-12, C-15, C-15b, C-17, C-18, C-20, C-20b
+#
+# BYPASS PATTERN: Goldens that do NOT test the greeting pre-set customer_profile
+# as a JSON string in session_parameters so the before_agent_callback early-return
+# guard fires and skips re-recognition. Also pre-set active_language, _escalation_trigger,
+# and _silence_count to satisfy every variable the callbacks read.
+#
+# GREETING PATTERN: Goldens testing C-01 / C-02 do NOT pre-set customer_profile.
+# They set telephony-caller-id so the callback calls recognize_customer and emits
+# the deterministic greeting.
+
+common_session_parameters:
+  # Variables ALL conversations share. These satisfy the callback's state reads.
+  # NOTE: customer_profile is intentionally OMITTED here — some goldens must NOT
+  # pre-set it (C-01, C-02, C-20, C-20b) so the callback's recognition path fires.
+  active_language: "English"
+  _escalation_trigger: ""
+  _silence_count: "0"
+
+conversations:
+
+  # ---------------------------------------------------------------------------
+  # C-01 — Deterministic greeting: recognised customer name confirmation
+  # ---------------------------------------------------------------------------
+  - conversation: c01_greeting_recognised_customer
+    session_parameters:
+      # Do NOT pre-set customer_profile — callback must do recognition.
+      telephony-caller-id: "+31201234567"
+    turns:
+      - user: "<event>welcome</event>"
+        agent: "Hi! Thanks for calling Vodafone Ziggo support. I've automatically recognised your number. Am I speaking with Jan de Jong?"
+      - user: "Yes, that's me."
+        agent: "Great, thanks for confirming. How can I help you today, Jan?"
+    expectations:
+      - "The agent must greet the customer using the exact callback-enforced phrase including the customer's full name Jan de Jong."
+      - "The agent must ask for name confirmation — it must NOT assume the customer without asking."
+      - "The agent must NOT re-run the greeting or re-introduce itself after the customer confirms."
+    tags: [P0, NO-GO, C-01, greeting, callback, voice]
+
+  # ---------------------------------------------------------------------------
+  # C-02 — recognize_customer called with correct phone_number at session start
+  # ---------------------------------------------------------------------------
+  - conversation: c02_recognize_customer_tool_call
+    session_parameters:
+      # Do NOT pre-set customer_profile — callback must call recognize_customer.
+      telephony-caller-id: "+31201234567"
+    turns:
+      - user: "<event>welcome</event>"
+        agent: "Hi! Thanks for calling Vodafone Ziggo support. I've automatically recognised your number. Am I speaking with Jan de Jong?"
+        tool_calls:
+          - action: recognize_customer
+            args:
+              phone_number: "+31201234567"
+      - user: "Yes, speaking."
+        agent: "Wonderful. How can I help you today, Jan?"
+    expectations:
+      - "The recognize_customer tool must be called exactly once at session start, before the greeting."
+      - "The tool must be called with phone_number equal to the telephony-caller-id value +31201234567."
+      - "The agent must NOT ask the customer for their phone number — it is supplied automatically."
+    tags: [P0, NO-GO, C-02, recognition, tool, callback]
+
+  # ---------------------------------------------------------------------------
+  # C-03 — Routing to billing_and_order_agent on billing intent
+  # ---------------------------------------------------------------------------
+  - conversation: c03_routing_billing_intent
+    session_parameters:
+      customer_profile: '{"customer_id": "CZ-98765", "first_name": "Jan", "last_name": "de Jong", "account_status": "Active", "is_default_persona": false}'
+    turns:
+      - user: "<event>welcome</event>"
+        agent: "Hi! Thanks for calling Vodafone Ziggo support. How can I help you today?"
+      - user: "I'd like to ask about my latest invoice — it seems higher than usual."
+        agent: "Of course, I can help with that. Let me transfer you to our billing team who'll look into your invoice right away."
+    expectations:
+      - "The agent must recognise the billing intent from the customer's utterance."
+      - "The agent must acknowledge the billing query before transferring."
+      - "The agent must transfer to billing_and_order_agent — it must NOT attempt to answer billing questions itself."
+      - "The agent must NOT ask the customer to repeat themselves or re-identify."
+    tags: [P0, NO-GO, C-03, routing, billing]
+
+  # ---------------------------------------------------------------------------
+  # C-04 — Routing to wifi_support_agent on WiFi intent
+  # ---------------------------------------------------------------------------
+  - conversation: c04_routing_wifi_intent
+    session_parameters:
+      customer_profile: '{"customer_id": "CZ-44321", "first_name": "Sarah", "last_name": "Jenkins", "account_status": "Active", "is_default_persona": false}'
+    turns:
+      - user: "<event>welcome</event>"
+        agent: "Hi! Thanks for calling Vodafone Ziggo support. How can I help you today?"
+      - user: "My internet has been really slow all morning — I think there might be a problem with my connection."
+        agent: "I'm sorry to hear that. Let me connect you to our WiFi support team who can run diagnostics and get this sorted for you."
+    expectations:
+      - "The agent must recognise the WiFi or connectivity intent from the customer's utterance."
+      - "The agent must acknowledge the issue empathetically before transferring."
+      - "The agent must transfer to wifi_support_agent — it must NOT attempt to diagnose the WiFi issue itself."
+      - "The agent must NOT ask the customer to repeat themselves or re-identify."
+    tags: [P0, NO-GO, C-04, routing, wifi]
+
+  # ---------------------------------------------------------------------------
+  # C-05 — retrieve_invoice_data called with correct customer_id; agent explains bill variance
+  # NOTE: This golden tests the billing spoke's tool call. We pre-set customer_profile
+  # and open directly with the billing query. Golden ends before any sub-agent transfer.
+  # The turn structure tests root_agent's routing acknowledgement only; the invoice
+  # tool call is tested in the context of the spoke receiving the routed session.
+  # Per multi-agent golden rule: end at or before the transfer boundary.
+  # ---------------------------------------------------------------------------
+  - conversation: c05_retrieve_invoice_data_tool_call
+    session_parameters:
+      customer_profile: '{"customer_id": "CZ-98765", "first_name": "Jan", "last_name": "de Jong", "account_status": "Active", "is_default_persona": false}'
+    turns:
+      - user: "<event>welcome</event>"
+        agent: "Hi! Thanks for calling Vodafone Ziggo support. How can I help you today?"
+      - user: "My bill this month is fifteen euros more than last month. Can you explain the increase?"
+        agent: "Absolutely, let me pull up your billing details so I can walk you through the charges."
+        tool_calls:
+          - action: retrieve_invoice_data
+            args:
+              customer_id: "CZ-98765"
+      - user: "Thank you, I appreciate it."
+        agent: "Of course. Your current bill is 75 euros compared to 60 euros last month. The increase of 15 euros is due to your new Wifi Pod monthly fee."
+    expectations:
+      - "The retrieve_invoice_data tool must be called with customer_id CZ-98765 — exactly as stored in customer_profile."
+      - "The agent must explain the bill increase using data from the tool response (Wifi Pod, 15 euro increase)."
+      - "The agent must NOT invent billing figures — all amounts must come from the tool response."
+      - "The agent must NOT ask the customer for their account number when customer_profile is already set."
+    tags: [P0, NO-GO, C-05, billing, tool]
+
+  # ---------------------------------------------------------------------------
+  # C-06 — get_order_status called with correct customer_id; agent reports delivery status
+  # ---------------------------------------------------------------------------
+  - conversation: c06_get_order_status_tool_call
+    session_parameters:
+      customer_profile: '{"customer_id": "CZ-98765", "first_name": "Jan", "last_name": "de Jong", "account_status": "Active", "is_default_persona": false}'
+    turns:
+      - user: "<event>welcome</event>"
+        agent: "Hi! Thanks for calling Vodafone Ziggo support. How can I help you today?"
+      - user: "I ordered a Wifi Pod last week. Can you tell me when it will arrive?"
+        agent: "Of course, let me check the status of your order right now."
+        tool_calls:
+          - action: get_order_status
+            args:
+              customer_id: "CZ-98765"
+      - user: "Great, thanks."
+        agent: "Your Wifi Pod order ORD-1122 is currently in transit and is scheduled to arrive tomorrow between your chosen delivery window."
+    expectations:
+      - "The get_order_status tool must be called with customer_id CZ-98765."
+      - "The agent must report the order status using data from the tool response (ORD-1122, In Transit, Tomorrow)."
+      - "The agent must NOT guess the delivery date — it must come from the tool."
+      - "The agent must NOT ask for an order reference number when customer_profile is already available."
+    tags: [P0, HIGH, C-06, billing, order, tool]
+
+  # ---------------------------------------------------------------------------
+  # C-07 — get_modem_diagnostics called with correct customer_id; agent reports findings
+  # ---------------------------------------------------------------------------
+  - conversation: c07_get_modem_diagnostics_tool_call
+    session_parameters:
+      customer_profile: '{"customer_id": "CZ-44321", "first_name": "Sarah", "last_name": "Jenkins", "account_status": "Active", "is_default_persona": false}'
+    turns:
+      - user: "<event>welcome</event>"
+        agent: "Hi! Thanks for calling Vodafone Ziggo support. How can I help you today?"
+      - user: "My WiFi keeps dropping. Can you check what's wrong?"
+        agent: "I'm sorry to hear that, Sarah. Let me run a diagnostic on your connection right away."
+        tool_calls:
+          - action: get_modem_diagnostics
+            args:
+              customer_id: "CZ-44321"
+      - user: "Okay, what did you find?"
+        agent: "I can see your modem MOD-8812 is online but showing weak signal strength and high packet loss. There is no area outage reported, so the issue appears to be specific to your connection."
+    expectations:
+      - "The get_modem_diagnostics tool must be called with customer_id CZ-44321."
+      - "The agent must report findings from the tool response (MOD-8812, Weak signal, High packet loss, no area outage)."
+      - "The agent must NOT state there is an area outage — the mock data returns area_outage: false."
+      - "The agent must NOT invent diagnostic results."
+    tags: [P0, NO-GO, C-07, wifi, diagnostics, tool]
+
+  # ---------------------------------------------------------------------------
+  # C-09 — schedule_mechanic_visit called with correct customer_id and preferred_slot
+  # ---------------------------------------------------------------------------
+  - conversation: c09_schedule_mechanic_visit_tool_call
+    session_parameters:
+      customer_profile: '{"customer_id": "CZ-44321", "first_name": "Sarah", "last_name": "Jenkins", "account_status": "Active", "is_default_persona": false}'
+    turns:
+      - user: "<event>welcome</event>"
+        agent: "Hi! Thanks for calling Vodafone Ziggo support. How can I help you today?"
+      - user: "I'd like to book an engineer visit. Can someone come next Tuesday morning?"
+        agent: "Absolutely, let me check availability and book that slot for you."
+        tool_calls:
+          - action: schedule_mechanic_visit
+            args:
+              customer_id: "CZ-44321"
+              preferred_slot: "Next Tuesday morning"
+      - user: "Perfect."
+        agent: "I've booked your engineer appointment. Appointment APT-5544 is confirmed for Next Tuesday between 09:00 and 13:00."
+    expectations:
+      - "The schedule_mechanic_visit tool must be called with customer_id CZ-44321."
+      - "The preferred_slot argument must reflect the customer's expressed preference: next Tuesday morning."
+      - "The agent must confirm the appointment using data from the tool response (APT-5544, Next Tuesday, 09:00 - 13:00)."
+      - "The agent must NOT invent appointment IDs or time slots."
+    tags: [P0, NO-GO, C-09, wifi, scheduling, tool]
+
+  # ---------------------------------------------------------------------------
+  # C-10 — Escalation triggered when customer explicitly requests a human agent
+  # ---------------------------------------------------------------------------
+  - conversation: c10_escalation_customer_requested_human
+    session_parameters:
+      customer_profile: '{"customer_id": "CZ-44321", "first_name": "Sarah", "last_name": "Jenkins", "account_status": "Active", "is_default_persona": false}'
+    turns:
+      - user: "<event>welcome</event>"
+        agent: "Hi! Thanks for calling Vodafone Ziggo support. How can I help you today?"
+      - user: "Actually, I'd rather just speak to a real person please."
+        agent: "Of course, I completely understand. Let me get someone on the line for you right away."
+        tool_calls:
+          - action: set_escalation_trigger
+            args:
+              reason: "customer_requested"
+    expectations:
+      - "The set_escalation_trigger tool must be called when the customer explicitly requests a human agent."
+      - "The reason argument must reflect a customer-requested escalation."
+      - "The agent must acknowledge the request warmly before triggering the escalation."
+      - "The agent must NOT argue with the customer or attempt to dissuade them from speaking to a human."
+      - "The agent must NOT say anything further after calling set_escalation_trigger."
+    tags: [P0, NO-GO, C-10, escalation, callback]
+
+  # ---------------------------------------------------------------------------
+  # C-11 — escalate_to_human called with non-empty context_summary (callback-assembled)
+  # The before_model_callback detects the _escalation_trigger and fires escalate_to_human
+  # deterministically. We pre-set _escalation_trigger to "escalate" to test the callback path.
+  # ---------------------------------------------------------------------------
+  - conversation: c11_escalate_to_human_context_summary
+    session_parameters:
+      customer_profile: '{"customer_id": "CZ-44321", "first_name": "Sarah", "last_name": "Jenkins", "account_status": "Active", "is_default_persona": false}'
+      _escalation_trigger: "escalate"
+    turns:
+      - user: "<event>welcome</event>"
+        agent: "Thank you for your patience. I'm transferring you to a live agent now who will be able to assist you further."
+        tool_calls:
+          - action: escalate_to_human
+            args:
+              customer_id: "CZ-44321"
+              context_summary:
+                $matchType: "contains"
+                $matchValue: "Sarah Jenkins"
+                $originalValue: ""
+    expectations:
+      - "The escalate_to_human tool must be called when _escalation_trigger is set to escalate."
+      - "The customer_id argument must be CZ-44321 — taken from customer_profile in session state."
+      - "The context_summary argument must be non-empty and must contain the customer name or account information."
+      - "The callback must assemble context_summary from session state — the LLM must NOT construct it freehand."
+    tags: [P0, NO-GO, C-11, escalation, tool, callback]
+
+  # ---------------------------------------------------------------------------
+  # C-12 — Escalation triggered for out-of-scope request (billing address change)
+  # ---------------------------------------------------------------------------
+  - conversation: c12_escalation_out_of_scope
+    session_parameters:
+      customer_profile: '{"customer_id": "CZ-12345", "first_name": "Mark", "last_name": "Evans", "account_status": "Active", "is_default_persona": false}'
+    turns:
+      - user: "<event>welcome</event>"
+        agent: "Hi! Thanks for calling Vodafone Ziggo support. How can I help you today?"
+      - user: "I need to update my billing address — I've moved house."
+        agent: "I understand — congratulations on your new home! I'm afraid updating your billing address is something I'm not able to do directly, but I can connect you to one of our advisors who can take care of that for you."
+        tool_calls:
+          - action: set_escalation_trigger
+            args:
+              reason: "out_of_scope"
+    expectations:
+      - "The agent must recognise the billing address change as an out-of-scope request."
+      - "The agent must acknowledge the limitation honestly without inventing capabilities."
+      - "The set_escalation_trigger tool must be called with reason out_of_scope."
+      - "The agent must NOT pretend it can update the address itself."
+      - "The agent must offer escalation to a human advisor, not simply decline and end the call."
+    tags: [P1, HIGH, C-12, escalation, out-of-scope]
+
+  # ---------------------------------------------------------------------------
+  # C-15 — Explicit Dutch language switch at root: update_language called; agent continues in Dutch
+  # ---------------------------------------------------------------------------
+  - conversation: c15_explicit_dutch_switch_at_root
+    session_parameters:
+      customer_profile: '{"customer_id": "CZ-98765", "first_name": "Jan", "last_name": "de Jong", "account_status": "Active", "is_default_persona": false}'
+    turns:
+      - user: "<event>welcome</event>"
+        agent: "Hi! Thanks for calling Vodafone Ziggo support. How can I help you today?"
+      - user: "Kunt u Nederlands spreken alstublieft?"
+        agent: "Natuurlijk! Hoe kan ik u helpen?"
+        tool_calls:
+          - action: update_language
+            args:
+              new_language: "Dutch"
+      - user: "Ik heb een vraag over mijn rekening."
+        agent: "Geen probleem. Ik zal u doorverbinden met onze factureringsteam."
+    expectations:
+      - "The update_language tool must be called BEFORE the first response in Dutch."
+      - "The new_language argument must be Dutch."
+      - "The agent must respond in Dutch for all turns after the switch."
+      - "The agent must NOT revert to English unless the customer explicitly requests it."
+      - "The agent must NOT call update_language again in subsequent turns unless the language changes again."
+    tags: [P1, HIGH, C-15, multilingual, dutch, tool]
+
+  # ---------------------------------------------------------------------------
+  # C-15b — Explicit Dutch language switch mid-spoke (billing): update_language called; spoke continues in Dutch
+  # ---------------------------------------------------------------------------
+  - conversation: c15b_explicit_dutch_switch_mid_spoke_billing
+    session_parameters:
+      customer_profile: '{"customer_id": "CZ-98765", "first_name": "Jan", "last_name": "de Jong", "account_status": "Active", "is_default_persona": false}'
+    turns:
+      - user: "<event>welcome</event>"
+        agent: "Hi! Thanks for calling Vodafone Ziggo support. How can I help you today?"
+      - user: "I have a question about my invoice."
+        agent: "Of course, let me look into your billing details for you."
+      - user: "Sorry, kunt u in het Nederlands verdergaan? Het is makkelijker voor mij."
+        agent: "Ja, natuurlijk! Ik zal u graag in het Nederlands helpen."
+        tool_calls:
+          - action: update_language
+            args:
+              new_language: "Dutch"
+      - user: "Mijn rekening is dit maand hoger dan normaal."
+        agent: "Ik begrijp het. Laat me uw factuurgegevens bekijken zodat ik de extra kosten kan uitleggen."
+    expectations:
+      - "The update_language tool must be called when the customer switches to Dutch mid-conversation."
+      - "The new_language argument must be Dutch."
+      - "The agent must respond in Dutch for all turns after the switch, including inside billing context."
+      - "The update_language tool is available on spoke agents — the switch must work mid-spoke without returning to root."
+      - "The agent must NOT revert to English unless explicitly asked."
+    tags: [P1, HIGH, C-15b, multilingual, dutch, tool, spoke]
+
+  # ---------------------------------------------------------------------------
+  # C-17 — Deterministic farewell injected before end_session
+  # The after_model_callback on root_agent intercepts session end and injects the
+  # locale-aware farewell before end_session is emitted.
+  # ---------------------------------------------------------------------------
+  - conversation: c17_deterministic_farewell_english
+    session_parameters:
+      customer_profile: '{"customer_id": "CZ-98765", "first_name": "Jan", "last_name": "de Jong", "account_status": "Active", "is_default_persona": false}'
+    turns:
+      - user: "<event>welcome</event>"
+        agent: "Hi! Thanks for calling Vodafone Ziggo support. How can I help you today?"
+      - user: "No, that's everything thank you. Goodbye."
+        agent: "Thank you for calling Vodafone Ziggo. Have a wonderful day!"
+        tool_calls:
+          - action: end_session
+            args:
+              session_escalated: false
+    expectations:
+      - "The agent must deliver the exact English farewell: 'Thank you for calling Vodafone Ziggo. Have a wonderful day!'"
+      - "The farewell must be injected by the after_model_callback BEFORE end_session is called."
+      - "The agent must NOT end the session without speaking the farewell first."
+      - "The agent must NOT add extra text after the farewell phrase."
+    tags: [P1, HIGH, C-17, farewell, callback, voice]
+
+  # ---------------------------------------------------------------------------
+  # C-18 — Silence handling: session ends after 3 consecutive silence events
+  # The before_model_callback on root_agent increments _silence_count on each
+  # silence event and ends the session after 3. We simulate 3 silence turns.
+  # ---------------------------------------------------------------------------
+  - conversation: c18_silence_handling_session_ends
+    session_parameters:
+      customer_profile: '{"customer_id": "DEMO-001", "first_name": "there", "last_name": "", "account_status": "Active", "is_default_persona": true}'
+      _silence_count: "0"
+    turns:
+      - user: "<event>welcome</event>"
+        agent: "Hi! Thanks for calling Vodafone Ziggo support. How can I help you today?"
+      - user: "<event>no-input</event>"
+        agent: "I'm sorry, I didn't catch that. Are you still there?"
+      - user: "<event>no-input</event>"
+        agent: "I can't seem to hear you. Please try again or call us back if you're having trouble."
+      - user: "<event>no-input</event>"
+        agent: "Thank you for calling Vodafone Ziggo. Have a wonderful day!"
+        tool_calls:
+          - action: end_session
+            args:
+              session_escalated: false
+    expectations:
+      - "The before_model_callback must increment _silence_count on each no-input event."
+      - "After 3 consecutive silence events the agent must end the session."
+      - "The agent must deliver a farewell before ending the session after silence."
+      - "The agent must NOT continue prompting after the third silence — the session must end."
+    tags: [P1, MEDIUM, C-18, silence, voice, callback]
+
+  # ---------------------------------------------------------------------------
+  # C-20 — recognize_customer failure: agent asks for account number
+  # When telephony-caller-id is present but recognize_customer finds no match,
+  # the callback falls back to default persona and the agent asks for account number.
+  # ---------------------------------------------------------------------------
+  - conversation: c20_recognize_customer_failure_ask_account_number
+    session_parameters:
+      # Do NOT pre-set customer_profile — callback must run and handle the fallback.
+      # Use a phone number NOT in the mock data to trigger the unrecognised path.
+      telephony-caller-id: "+31999999999"
+    turns:
+      - user: "<event>welcome</event>"
+        agent: "Hi! Thanks for calling Vodafone Ziggo support. How can I help you today?"
+      - user: "I need help with my bill."
+        agent: "I'd be happy to help with that. I wasn't able to automatically recognise your number. Could you please confirm your account number so I can pull up your details?"
+    expectations:
+      - "When recognize_customer returns no match, the callback must use the default persona fallback."
+      - "The agent must deliver the default persona greeting (no name confirmation)."
+      - "The agent must ask the customer for their account number when recognition fails."
+      - "The agent must NOT use a customer name it has not confirmed."
+      - "The agent must NOT end the session — it must continue to assist."
+    tags: [P1, HIGH, C-20, recognition, fallback]
+
+  # ---------------------------------------------------------------------------
+  # C-20b — Default persona fallback: agent starts without name confirmation when no ANI
+  # When telephony-caller-id is absent (simulator), the callback sets the default persona
+  # and emits the generic greeting without name confirmation.
+  # ---------------------------------------------------------------------------
+  - conversation: c20b_default_persona_fallback_no_ani
+    session_parameters:
+      # Do NOT pre-set customer_profile AND do NOT set telephony-caller-id.
+      # This simulates the CXAS simulator path — no ANI present.
+    turns:
+      - user: "<event>welcome</event>"
+        agent: "Hi! Thanks for calling Vodafone Ziggo support. How can I help you today?"
+      - user: "Hi, I need to check on my internet connection."
+        agent: "Of course, I'm happy to help with that. Let me look into your connection."
+    expectations:
+      - "When no telephony-caller-id is set, the callback must use the default persona fallback."
+      - "The agent must deliver the exact default persona greeting: 'Hi! Thanks for calling Vodafone Ziggo support. How can I help you today?'"
+      - "The agent must NOT ask for name confirmation — the default persona greeting has no name."
+      - "The agent must NOT say the customer's name in the first turn since it has not been confirmed."
+      - "The session must proceed normally despite no ANI being present."
+    tags: [P1, HIGH, C-20b, recognition, fallback, simulator]

@@ -1,0 +1,230 @@
+# Vodafone Ziggo Voice Agent — Simulation Evals
+# Coverage: C-08, C-13, C-14, C-16, C-19
+# All sims are audio-agent evals. max_turns includes +5 audio overhead.
+# Session parameters: pre-set per the audio agent design; customer_profile is
+# pre-populated for the sim user identity but will be overwritten at session
+# start by before_agent_callback (which skips reset when customer_profile is
+# already set via the early-return guard). Use these to seed state for spoke
+# entry or mid-conversation scenarios as needed.
+
+- name: c08_empathetic_jargon_explanation
+  tags: [P0, HIGH, wifi, empathy, conversational-repair]
+  steps:
+    - goal: >
+        The sim user calls with a slow internet complaint, triggers a diagnostic,
+        and expresses confusion when the agent mentions technical terms like
+        "packet loss" or "signal strength". The sim user should receive a plain
+        language explanation delivered with empathy.
+      success_criteria: >
+        The agent explains the technical finding in plain, jargon-free language
+        that a non-technical customer can understand, accompanied by an empathetic
+        acknowledgement of the impact on the customer. Receiving a clear plain
+        language explanation counts as a successful outcome.
+      response_guide: >
+        You are Jan de Jong, a Vodafone Ziggo customer calling about slow internet.
+        When asked for your name, confirm you are Jan de Jong. Your account number
+        is CZ-98765 if asked.
+
+        Turn 1: Say "My internet has been really slow for the past two days."
+        After the agent runs diagnostics and mentions technical findings (e.g.
+        "packet loss", "signal strength", "modem telemetry"), respond with
+        confusion: "I'm sorry, I don't really understand what that means — what
+        is packet loss exactly?" Wait for the plain language explanation. If the
+        explanation is clear and empathetic, express relief: "Oh, that makes
+        sense, thank you." Then ask what can be done to fix it. Follow the
+        agent's troubleshooting guidance. If the agent offers a mechanic visit,
+        accept it and provide a preferred slot of "next Tuesday morning".
+      max_turns: 17
+  expectations:
+    - "The agent must call a tool to check modem diagnostics and retrieve the customer's signal and connection status."
+    - "When the customer expresses confusion about a technical term, the agent must explain it in plain everyday language without using further jargon."
+    - "The agent must acknowledge the customer's frustration or inconvenience with an empathetic phrase before providing the technical explanation."
+    - "The agent must NOT simply repeat the technical term or provide a definition that still relies on technical vocabulary."
+    - "After explaining the issue, the agent must offer a concrete next step such as scheduling a technician visit."
+  session_parameters:
+    customer_profile: '{"customer_id": "CZ-98765", "first_name": "Jan", "last_name": "de Jong", "account_status": "Active", "is_default_persona": false}'
+    active_language: "English"
+    _escalation_trigger: ""
+    _silence_count: "0"
+
+
+- name: c13_off_topic_competitor_deflection
+  tags: [P1, MEDIUM, out-of-scope, deflection]
+  steps:
+    - goal: >
+        The sim user raises an unsolicited comparison with a competitor (e.g.
+        asking whether another provider offers a better deal), expecting the
+        agent to decline graciously and steer the conversation back to Vodafone
+        Ziggo support topics without being dismissive or disparaging.
+      success_criteria: >
+        The agent declines to comment on or compare competitor offerings in a
+        warm, non-confrontational way, and successfully redirects the customer
+        to in-scope support topics. Being redirected back to Vodafone Ziggo
+        support topics counts as a successful outcome.
+      response_guide: >
+        You are Sarah Jenkins, a Vodafone Ziggo customer. Your account number
+        is CZ-44321 if asked.
+
+        Turn 1: Start with a legitimate billing question: "Can you tell me why
+        my bill went up this month?"
+        After the agent provides the billing explanation, pivot to the
+        off-topic question: "Actually, I've seen that KPN is offering a much
+        cheaper package — can you tell me if they're better value than
+        Vodafone Ziggo?"
+        If the agent declines to comment on competitors, accept the redirect
+        politely. Do NOT push back more than once on the competitor question.
+        After being redirected, say "OK, fair enough" and ask if there is
+        anything the agent can do about your current bill.
+      max_turns: 17
+  expectations:
+    - "The agent must call a tool to retrieve invoice data to address the billing question before the competitor topic arises."
+    - "When the customer asks about a competitor, the agent must decline to compare or comment on competitor offerings."
+    - "The agent's deflection must be warm and polite — it must NOT be dismissive, condescending, or defensive."
+    - "The agent must steer the conversation back to Vodafone Ziggo support topics after the deflection."
+    - "The agent must NOT invent or disclose information about competitor pricing or services."
+  session_parameters:
+    customer_profile: '{"customer_id": "CZ-44321", "first_name": "Sarah", "last_name": "Jenkins", "account_status": "Active", "is_default_persona": false}'
+    active_language: "English"
+    _escalation_trigger: ""
+    _silence_count: "0"
+
+
+- name: c14_multi_intent_billing_then_wifi
+  tags: [P0, HIGH, multi-intent, routing]
+  steps:
+    - goal: >
+        The sim user presents two distinct intents in a single opening turn —
+        a billing question and a WiFi problem. The agent should propose
+        sequencing (billing first, then WiFi), route to the billing spoke,
+        resolve the billing query, then route to the WiFi spoke and resolve
+        the WiFi query. Both CUJs must be completed within the same session.
+      success_criteria: >
+        The agent successfully proposes and executes sequencing — billing
+        handled first, WiFi handled second — without losing context between
+        spokes. Both issues are resolved (billing explained, WiFi diagnostics
+        run and next step offered) before the call ends. Both issues being
+        addressed and resolved counts as a successful outcome.
+      response_guide: >
+        You are Mark Evans, a Vodafone Ziggo customer. Your account number is
+        CZ-12345 if asked.
+
+        Turn 1: Present both intents at once: "Hi, I've got two things —
+        firstly my bill is higher than usual, and also my WiFi keeps dropping
+        out. Can you help with both?"
+
+        Billing phase: When the agent addresses billing first, engage
+        naturally. If asked to confirm your identity, say you are Mark Evans,
+        account CZ-12345. When the agent explains the billing variance, say
+        "OK, that makes sense, thank you." Signal you are ready to move on:
+        "Great, and what about my WiFi?"
+
+        WiFi phase: When the agent switches to WiFi support, describe the
+        symptom: "My WiFi keeps dropping, especially in the evening." When
+        diagnostics are mentioned, cooperate. If a mechanic visit is offered,
+        accept it with the slot "next Wednesday afternoon". End the call
+        naturally after both issues are resolved.
+      max_turns: 21
+  expectations:
+    - "The agent must acknowledge both intents and propose or state a sequencing order (billing before WiFi) before addressing either one."
+    - "The agent must call a tool to retrieve billing data during the billing phase."
+    - "After resolving the billing query, the agent must transition to the WiFi query without requiring the customer to re-explain their issue."
+    - "The agent must call a tool to run modem diagnostics during the WiFi phase."
+    - "The agent must NOT re-greet the customer or ask them to re-identify themselves when switching between billing and WiFi topics."
+  session_parameters:
+    customer_profile: '{"customer_id": "CZ-12345", "first_name": "Mark", "last_name": "Evans", "account_status": "Active", "is_default_persona": false}'
+    active_language: "English"
+    _escalation_trigger: ""
+    _silence_count: "0"
+
+
+- name: c16_language_guardrail_isolated_dutch_words
+  tags: [P1, MEDIUM, multilingual, dutch, language-detection]
+  steps:
+    - goal: >
+        The sim user conducts a support conversation entirely in English but
+        naturally drops isolated Dutch words or short Dutch phrases (fewer than
+        3 words, or Dutch cognates) into otherwise English sentences. The agent
+        must NOT interpret these as an explicit language switch request and must
+        remain in English throughout.
+      success_criteria: >
+        The agent remains in English for the entire conversation without calling
+        the language switch tool. Completing the support interaction in English
+        throughout, despite the isolated Dutch words, counts as a successful
+        outcome.
+      response_guide: >
+        You are Jan de Jong, a Vodafone Ziggo customer. Your account number is
+        CZ-98765 if asked.
+
+        Conduct the whole conversation in English. Naturally work isolated
+        Dutch words into your English sentences across at least 3 turns —
+        examples:
+          - "I need help with my bill, danke."
+          - "My internet is very slow — ja, it has been like this for days."
+          - "OK so what happens next? Goed."
+          - "Can you explain that? Geen idee what to do."
+
+        Do NOT say "Can you speak Dutch?" or any explicit request to switch
+        language. If the agent somehow responds in Dutch, continue in English
+        to signal you did not request a switch. Complete a short support
+        interaction (e.g., brief billing or WiFi enquiry) to end naturally.
+      max_turns: 11
+  expectations:
+    - "The agent must NOT call the language switch tool at any point during the conversation."
+    - "The agent must remain in English throughout, even when the customer uses isolated Dutch words within English sentences."
+    - "The agent must NOT comment on or draw attention to the isolated Dutch words unless directly relevant."
+    - "The agent must complete the support interaction in English without requesting clarification about language preference."
+  session_parameters:
+    customer_profile: '{"customer_id": "CZ-98765", "first_name": "Jan", "last_name": "de Jong", "account_status": "Active", "is_default_persona": false}'
+    active_language: "English"
+    _escalation_trigger: ""
+    _silence_count: "0"
+
+
+- name: c19_error_recovery_conversational_repair
+  tags: [P1, MEDIUM, error-recovery, voice]
+  steps:
+    - goal: >
+        The sim user creates a realistic misunderstanding scenario — either by
+        giving an ambiguous or unclear answer, or by indicating that the agent
+        has misunderstood them. The agent must detect the misunderstanding,
+        acknowledge it gracefully, and use conversational repair to clarify and
+        continue without losing the thread of the conversation.
+      success_criteria: >
+        The agent detects or responds appropriately to the miscommunication,
+        acknowledges it without blame, uses a clarifying repair strategy (e.g.,
+        paraphrasing back, asking a single clarifying question), and successfully
+        re-establishes shared understanding before continuing. Successfully
+        re-establishing shared understanding and continuing the support
+        interaction counts as a successful outcome.
+      response_guide: >
+        You are Sarah Jenkins, a Vodafone Ziggo customer. Your account number
+        is CZ-44321 if asked.
+
+        Turn 1: Ask a slightly ambiguous question: "I'm calling about the
+        thing you sent me — you know, the thing about my account."
+
+        If the agent asks for clarification, give a vague follow-up: "The
+        message — with the number on it." (This simulates ambient noise or
+        unclear speech.)
+
+        If the agent paraphrases back incorrectly (e.g., assumes you mean
+        an invoice when you actually mean an order confirmation), say: "No,
+        not a bill — I think it was about something I ordered?"
+
+        After the agent repairs the misunderstanding and correctly identifies
+        you are asking about order status, cooperate normally. If asked to
+        confirm identity, say you are Sarah Jenkins, account CZ-44321.
+        Once the agent provides order status information, say "Yes, that is
+        exactly it, thank you" and end the call.
+      max_turns: 17
+  expectations:
+    - "When the customer is unclear or vague, the agent must ask a single focused clarifying question rather than bombarding the customer with multiple questions at once."
+    - "When the agent has made an incorrect assumption, and the customer corrects it, the agent must acknowledge the correction gracefully — for example with a phrase such as 'Of course, I apologise for the confusion' — before moving forward."
+    - "The agent must NOT repeat the same misinterpretation after being corrected."
+    - "After re-establishing shared understanding, the agent must call a tool to retrieve the relevant account information (invoice data or order status) to address the customer's actual query."
+    - "The agent must maintain a calm, professional, and empathetic tone throughout the repair interaction."
+  session_parameters:
+    customer_profile: '{"customer_id": "CZ-44321", "first_name": "Sarah", "last_name": "Jenkins", "account_status": "Active", "is_default_persona": false}'
+    active_language: "English"
+    _escalation_trigger: ""
+    _silence_count: "0"
