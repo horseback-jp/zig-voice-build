@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Eval reports (generated, not source)
+eval-reports/
+
+# Scaffold manifest (working file)
+scaffold-manifest.json
+
+# macOS
+.DS_Store

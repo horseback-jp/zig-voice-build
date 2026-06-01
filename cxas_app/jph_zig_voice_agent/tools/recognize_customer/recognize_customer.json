@@ -1,0 +1,10 @@
+{
+    "name": "recognize_customer",
+    "pythonFunction": {
+        "name": "recognize_customer",
+        "pythonCode": "tools/recognize_customer/python_function/python_code.py",
+        "description": "Looks up a Vodafone Ziggo customer by their inbound telephone number (ANI/CLI). Called automatically by the before_agent_callback at session start to identify the caller and retrieve their profile. Returns customer_id, first_name, last_name, and account_status for recognised numbers. Returns customer_id=null for unrecognised numbers."
+    },
+    "executionType": "SYNCHRONOUS",
+    "displayName": "recognize_customer"
+}

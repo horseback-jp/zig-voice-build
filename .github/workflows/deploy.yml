@@ -1,0 +1,55 @@
+name: Deploy GECX Agent to Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+jobs:
+  deploy:
+    name: Lint & Deploy to GECX
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # Required for Workload Identity Federation
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud via Workload Identity Federation
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/1097682577517/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
+          service_account: 'github-deployer@ces-demo-emea.iam.gserviceaccount.com'
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install CXAS SDK & CLI
+        run: |
+          python -m pip install --upgrade pip
+          pip install cxas-scrapi
+
+      - name: Lint Agent Configuration
+        run: |
+          cxas lint --app-dir cxas_app/jph_zig_voice_agent
+
+      - name: Push Agent to Production GECX App
+        run: |
+          cxas push --app-dir cxas_app/jph_zig_voice_agent \
+            --to projects/ces-demo-emea/locations/us/apps/a76b5888-1d16-413c-9a3b-2f8d10c0b180 \
+            --project-id ces-demo-emea --location us
+
+      - name: GECX Server Synchronisation Audit
+        run: |
+          python scratch/prune_gecx_assets.py \
+            --app-name projects/ces-demo-emea/locations/us/apps/a76b5888-1d16-413c-9a3b-2f8d10c0b180 \
+            --app-dir cxas_app/jph_zig_voice_agent \
+            --mode audit

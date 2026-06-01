@@ -1,0 +1,14 @@
+{
+    "name": "wifi_support_agent",
+    "displayName": "wifi_support_agent",
+    "instruction": "agents/wifi_support_agent/instruction.txt",
+    "tools": [
+        "get_modem_diagnostics",
+        "schedule_mechanic_visit",
+        "escalate_to_human",
+        "set_escalation_trigger",
+        "update_language",
+        "end_session"
+    ],
+    "beforeModelCallbacks": [{"pythonCode": "agents/wifi_support_agent/before_model_callback/python_code.py"}]
+}

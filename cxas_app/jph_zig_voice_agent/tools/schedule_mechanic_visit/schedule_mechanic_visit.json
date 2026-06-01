@@ -1,0 +1,10 @@
+{
+    "name": "schedule_mechanic_visit",
+    "pythonFunction": {
+        "name": "schedule_mechanic_visit",
+        "pythonCode": "tools/schedule_mechanic_visit/python_function/python_code.py",
+        "description": "Books an on-site engineer appointment for a Vodafone Ziggo customer to resolve a physical connectivity or modem fault. Checks availability and confirms the slot in a single call. Call this after diagnostics confirm an on-site visit is needed and the customer has provided a preferred time slot."
+    },
+    "executionType": "SYNCHRONOUS",
+    "displayName": "schedule_mechanic_visit"
+}

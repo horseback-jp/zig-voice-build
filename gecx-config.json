@@ -1,0 +1,12 @@
+{
+  "project_id": "ces-demo-emea",
+  "location": "us",
+  "app_id": "a76b5888-1d16-413c-9a3b-2f8d10c0b180",
+  "app_display_name": "jph-zig-voice-agent",
+  "app_name": "projects/ces-demo-emea/locations/us/apps/a76b5888-1d16-413c-9a3b-2f8d10c0b180",
+  "model": "gemini-3.1-flash-live",
+  "modality": "audio",
+  "voice": "en-GB-Chirp3-HD-Zephyr",
+  "default_language": "en-GB",
+  "secondary_language": "nl-NL"
+}

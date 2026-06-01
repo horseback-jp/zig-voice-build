@@ -1,0 +1,10 @@
+{
+    "name": "escalate_to_human",
+    "pythonFunction": {
+        "name": "escalate_to_human",
+        "pythonCode": "tools/escalate_to_human/python_function/python_code.py",
+        "description": "Packages gathered session context into a summary payload and triggers a warm transfer to a live Vodafone Ziggo agent queue. Called by the before_model_callback — do NOT call this tool directly from instructions. Use set_escalation_trigger to signal escalation intent; the callback will call escalate_to_human with correctly assembled context."
+    },
+    "executionType": "SYNCHRONOUS",
+    "displayName": "escalate_to_human"
+}

@@ -1,0 +1,10 @@
+{
+    "name": "set_escalation_trigger",
+    "pythonFunction": {
+        "name": "set_escalation_trigger",
+        "pythonCode": "tools/set_escalation_trigger/python_function/python_code.py",
+        "description": "Sets the escalation trigger state variable to signal that the current conversation should be transferred to a live human agent. Call this when: (1) the customer explicitly requests to speak to a person or human agent, (2) the issue cannot be resolved by the agent after retries, or (3) the request is out of scope. Do NOT call escalate_to_human directly — this tool signals intent; the before_model_callback will execute the transfer deterministically with correct context. After calling this tool, do not say anything further."
+    },
+    "executionType": "SYNCHRONOUS",
+    "displayName": "set_escalation_trigger"
+}

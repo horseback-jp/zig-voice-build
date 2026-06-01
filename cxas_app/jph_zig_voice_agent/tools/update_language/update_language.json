@@ -1,0 +1,10 @@
+{
+    "name": "update_language",
+    "pythonFunction": {
+        "name": "update_language",
+        "pythonCode": "tools/update_language/python_function/python_code.py",
+        "description": "Updates the active conversation language when the customer requests a language switch. Call this BEFORE generating your first response in the new language. Required to gate language switching deterministically on gemini-3.1-flash-live (mitigates non-deterministic auto-detection bugs b/484305525, b/506098142). Writes active_language to session state."
+    },
+    "executionType": "SYNCHRONOUS",
+    "displayName": "update_language"
+}

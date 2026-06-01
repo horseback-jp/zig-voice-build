@@ -1,0 +1,80 @@
+{
+    "name": "jph-zig-voice-agent",
+    "displayName": "jph-zig-voice-agent",
+    "description": "Vodafone Ziggo AI Voice Support demonstration agent — hub-and-spoke multi-agent, audio modality, en-GB/nl-NL bilingual.",
+    "rootAgent": "root_agent",
+    "globalInstruction": "global_instruction.txt",
+    "tools": [
+        "set_escalation_trigger",
+        "recognize_customer",
+        "update_language",
+        "retrieve_invoice_data",
+        "get_order_status",
+        "get_modem_diagnostics",
+        "schedule_mechanic_visit",
+        "escalate_to_human"
+    ],
+    "modelSettings": {
+        "model": "gemini-3.1-flash-live"
+    },
+    "languageSettings": {
+        "defaultLanguageCode": "en-GB"
+    },
+    "timeZoneSettings": {
+        "timeZone": "Europe/Amsterdam"
+    },
+    "audioProcessingConfig": {
+        "synthesizeSpeechConfigs": {
+            "en-GB": {
+                "voice": "en-GB-Chirp3-HD-Zephyr",
+                "speakingRate": 0.95
+            },
+            "nl-NL": {
+                "voice": "en-GB-Chirp3-HD-Zephyr",
+                "speakingRate": 0.95
+            }
+        }
+    },
+    "defaultChannelProfile": {},
+    "loggingSettings": {
+        "conversationLoggingSettings": {},
+        "evaluationAudioRecordingConfig": {
+            "gcsBucket": "gs://ces-demo-emea-audio-evals"
+        }
+    },
+    "toolExecutionMode": "PARALLEL",
+    "evaluationMetricsThresholds": {
+        "goldenEvaluationMetricsThresholds": {
+            "turnLevelMetricsThresholds": {
+                "semanticSimilaritySuccessThreshold": 3,
+                "overallToolInvocationCorrectnessThreshold": 1
+            },
+            "toolMatchingSettings": {
+                "extraToolCallBehavior": "ALLOW"
+            }
+        },
+        "goldenHallucinationMetricBehavior": "DISABLED"
+    },
+    "variableDeclarations": [
+        {
+            "name": "customer_profile",
+            "description": "JSON object containing customer identity: customer_id, first_name, last_name, account_status, is_default_persona. Set by before_agent_callback from recognize_customer result or default persona fallback. NEVER override in evals.",
+            "schema": {"type": "STRING", "default": ""}
+        },
+        {
+            "name": "active_language",
+            "description": "Active conversation language. One of: 'English', 'Dutch'. Default 'English'. Updated by update_language tool on explicit switch request.",
+            "schema": {"type": "STRING", "default": "English"}
+        },
+        {
+            "name": "_escalation_trigger",
+            "description": "Internal trigger for deterministic escalation. Set by set_escalation_trigger tool (LLM detection). Read and cleared by before_model_callback (execution). One of: 'escalate', ''. NEVER set in evals.",
+            "schema": {"type": "STRING", "default": ""}
+        },
+        {
+            "name": "_silence_count",
+            "description": "Consecutive silence/no-input event count. Incremented by before_model_callback on root_agent. Reset to 0 when user speaks. Session ends after 3 consecutive silences.",
+            "schema": {"type": "STRING", "default": "0"}
+        }
+    ]
+}

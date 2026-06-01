@@ -1,0 +1,14 @@
+{
+    "name": "billing_and_order_agent",
+    "displayName": "billing_and_order_agent",
+    "instruction": "agents/billing_and_order_agent/instruction.txt",
+    "tools": [
+        "retrieve_invoice_data",
+        "get_order_status",
+        "escalate_to_human",
+        "set_escalation_trigger",
+        "update_language",
+        "end_session"
+    ],
+    "beforeModelCallbacks": [{"pythonCode": "agents/billing_and_order_agent/before_model_callback/python_code.py"}]
+}

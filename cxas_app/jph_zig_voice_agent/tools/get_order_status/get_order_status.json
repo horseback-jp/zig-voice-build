@@ -1,0 +1,10 @@
+{
+    "name": "get_order_status",
+    "pythonFunction": {
+        "name": "get_order_status",
+        "pythonCode": "tools/get_order_status/python_function/python_code.py",
+        "description": "Retrieves the status of a Vodafone Ziggo customer's most recent hardware order including order ID, item name, shipment status, and estimated delivery date. Use this when a customer asks about an order, delivery, or shipment. Always call this before reporting any delivery information."
+    },
+    "executionType": "SYNCHRONOUS",
+    "displayName": "get_order_status"
+}

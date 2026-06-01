@@ -1,0 +1,10 @@
+{
+    "name": "root_agent",
+    "displayName": "root_agent",
+    "instruction": "agents/root_agent/instruction.txt",
+    "tools": ["recognize_customer", "update_language", "set_escalation_trigger", "end_session"],
+    "childAgents": ["billing_and_order_agent", "wifi_support_agent"],
+    "beforeAgentCallbacks": [{"pythonCode": "agents/root_agent/before_agent_callback/python_code.py"}],
+    "beforeModelCallbacks": [{"pythonCode": "agents/root_agent/before_model_callback/python_code.py"}],
+    "afterModelCallbacks": [{"pythonCode": "agents/root_agent/after_model_callback/python_code.py"}]
+}

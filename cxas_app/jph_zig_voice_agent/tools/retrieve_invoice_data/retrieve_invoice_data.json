@@ -1,0 +1,10 @@
+{
+    "name": "retrieve_invoice_data",
+    "pythonFunction": {
+        "name": "retrieve_invoice_data",
+        "pythonCode": "tools/retrieve_invoice_data/python_function/python_code.py",
+        "description": "Retrieves billing data for a Vodafone Ziggo customer including current and previous invoice amounts and itemised charges. Use this to explain bill variances, unexpected charges, or price increases. Always call this before explaining any billing information — never guess charges."
+    },
+    "executionType": "SYNCHRONOUS",
+    "displayName": "retrieve_invoice_data"
+}

@@ -1,0 +1,10 @@
+{
+    "name": "get_modem_diagnostics",
+    "pythonFunction": {
+        "name": "get_modem_diagnostics",
+        "pythonCode": "tools/get_modem_diagnostics/python_function/python_code.py",
+        "description": "Retrieves modem telemetry and area outage status for a Vodafone Ziggo customer in a single call. Returns modem ID, online status, signal strength, packet loss percentage, and whether there is a known area outage. Always call this before diagnosing or explaining any WiFi issue. Do not make assumptions about connection quality without calling this first."
+    },
+    "executionType": "SYNCHRONOUS",
+    "displayName": "get_modem_diagnostics"
+}
