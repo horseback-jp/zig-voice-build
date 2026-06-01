@@ -72,7 +72,8 @@ def before_agent_callback(callback_context: CallbackContext) -> Optional[Content
     state["active_language"] = "English"
 
     # -------------------------------------------------------------------------
-    # DETERMINISTIC GREETING: Return LlmResponse to bypass LLM for first turn.
+    # DETERMINISTIC GREETING: Return Content to bypass LLM for first turn.
+    # before_agent_callback returns Optional[Content], NOT LlmResponse.
     # -------------------------------------------------------------------------
     if not customer_profile["is_default_persona"]:
         first_name = customer_profile["first_name"]
@@ -88,6 +89,4 @@ def before_agent_callback(callback_context: CallbackContext) -> Optional[Content
             "How can I help you today?"
         )
 
-    return LlmResponse.from_parts(parts=[
-        Part.from_text(text=greeting),
-    ])
+    return Content(role="model", parts=[Part(text=greeting)])
